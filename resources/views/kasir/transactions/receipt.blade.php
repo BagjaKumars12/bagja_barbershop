@@ -4,46 +4,107 @@
     <meta charset="UTF-8">
     <title>Struk Transaksi</title>
     <style>
-        body { font-family: monospace; width: 300px; margin: 0 auto; padding: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            width: 300px;
+            margin: 20px auto;
+            background: #f5f5f5;
+        }
+        .receipt {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         .header { text-align: center; margin-bottom: 20px; }
-        .divider { border-top: 1px dashed #000; margin: 10px 0; }
-        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+        .header h2 { color: #D4AF37; margin-bottom: 5px; }
+        .divider { border-top: 1px dashed #aaa; margin: 12px 0; }
+        .row { display: flex; justify-content: space-between; margin: 6px 0; }
+        .total { font-weight: bold; font-size: 1.1em; margin-top: 8px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #666; }
+        .button-group {
+            text-align: center;
+            margin-top: 25px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-print {
+            background: #D4AF37;
+            color: white;
+        }
+        .btn-print:hover { background: #b8942f; }
+        .btn-close {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-close:hover { background: #5a6268; }
         @media print {
-            body { margin: 0; padding: 10px; }
-            .no-print { display: none; }
+            body { background: white; margin: 0; padding: 0; }
+            .receipt { box-shadow: none; padding: 10px; }
+            .button-group { display: none; }
         }
     </style>
 </head>
 <body>
+<div class="receipt">
     <div class="header">
         <h2>Bagja Barbershop</h2>
         <p>JL Arief Rohman Haikin No. 45<br>Subang, Jawa Barat</p>
     </div>
     <div class="divider"></div>
-    <p><strong>No. Transaksi:</strong> {{ $transaction->id }}</p>
-    <p><strong>Tanggal:</strong> {{ $transaction->paid_at->format('d M Y, H:i') }}</p>
-    <p><strong>Kasir:</strong> {{ Auth::user()->username }}</p>
+    
+    <div class="row"><span>No. Transaksi:</span><span>{{ $transaction->id }}</span></div>
+    <div class="row"><span>Tanggal:</span><span>{{ $transaction->paid_at->format('d/m/Y H:i') }}</span></div>
+    <div class="row"><span>Kasir:</span><span>{{ Auth::user()->username }}</span></div>
+    
     <div class="divider"></div>
-    <table style="width:100%">
-        @foreach($transaction->booking->services as $service)
-        <tr>
-            <td>{{ $service->name }}</td>
-            <td style="text-align:right">Rp {{ number_format($service->price,0,',','.') }}</td>
-        </tr>
-        @endforeach
-    </table>
+    
+    @foreach($transaction->booking->services as $service)
+    <div class="row">
+        <span>{{ $service->name }}</span>
+        <span>Rp {{ number_format($service->price,0,',','.') }}</span>
+    </div>
+    @endforeach
+    
     <div class="divider"></div>
-    <p><strong>Total item:</strong> {{ $transaction->booking->services->count() }}</p>
-    <p><strong>Total:</strong> Rp {{ number_format($transaction->amount,0,',','.') }}</p>
-    <p><strong>Tunai:</strong> Rp {{ number_format(request()->input('paid', $transaction->amount),0,',','.') }}</p>
-    <p><strong>Kembalian:</strong> Rp {{ number_format(request()->input('paid', 0) - $transaction->amount,0,',','.') }}</p>
+    
+    <div class="row"><span>Total item:</span><span>{{ $transaction->booking->services->count() }}</span></div>
+    <div class="row total"><span>TOTAL:</span><span>Rp {{ number_format($transaction->amount,0,',','.') }}</span></div>
+    <div class="row"><span>Tunai:</span><span>Rp {{ number_format(request()->input('paid', $transaction->amount),0,',','.') }}</span></div>
+    <div class="row"><span>Kembalian:</span><span>Rp {{ number_format(max(0, request()->input('paid', 0) - $transaction->amount),0,',','.') }}</span></div>
+    
     <div class="divider"></div>
     <div class="footer">
-        Terimakasih telah berbelanja,<br>semoga harian anda menyenangkan!
+        Terima kasih telah berkunjung!<br>
+        ~ Senyum itu sedekah ~
     </div>
-    <div class="no-print" style="text-align:center; margin-top:20px;">
-        <button onclick="window.print()">Print Struk</button>
-        <button onclick="window.close()">Tutup</button>
-    </div>
+</div>
+
+<div class="button-group">
+    <button class="btn-print" onclick="window.print()">🖨️ Print Struk</button>
+    <button class="btn-close" onclick="handleClose()">✖️ Tutup</button>
+</div>
+
+<script>
+    function handleClose() {
+        // If this window was opened by a previous page, close it.
+        if (window.opener) {
+            window.close();
+        } else {
+            // Otherwise redirect to transaction index
+            window.location.href = "{{ route('kasir.transactions') }}";
+        }
+    }
+</script>
 </body>
 </html>

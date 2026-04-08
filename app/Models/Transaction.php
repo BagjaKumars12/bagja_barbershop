@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $fillable = ['booking_id', 'amount', 'status', 'paid_at'];
+    protected $fillable = [
+        'booking_id',
+        'amount',
+        'payment_method', // added
+        'status',
+        'paid_at'
+    ];
 
     protected $casts = [
         'paid_at' => 'datetime',
@@ -17,13 +23,11 @@ class Transaction extends Model
         return $this->belongsTo(Booking::class);
     }
 
-    // Akses customer melalui booking
     public function getCustomerAttribute()
     {
         return $this->booking?->customer;
     }
 
-    // Akses service melalui booking
     public function getServiceAttribute()
     {
         return $this->booking?->service;

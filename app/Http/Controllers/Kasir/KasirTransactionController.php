@@ -33,21 +33,30 @@ class KasirTransactionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'barber_id'   => 'required|exists:barbers,id',
-            'services'    => 'required|array|min:1',
-            'services.*.id' => 'exists:services,id',
-            'services.*.quantity' => 'integer|min:1',
-            'notes'       => 'nullable|string',
-            'payment_method' => 'required|in:cash,card,transfer',
-            'paid_amount' => 'required|numeric|min:0',
+            'customer_id'    => 'required|exists:customers,id',
+            'barber_id'      => 'required|exists:barbers,id',
+            'services_json'  => 'required|json',
+            'notes'          => 'nullable|string',
+            'payment_method' => 'required|in:cash,qris',
+            'paid_amount'    => 'required|numeric|min:0',
         ]);
 
+        // Decode JSON services
+        $services = json_decode($request->services_json, true);
+        if (empty($services)) {
+            return back()->withErrors(['services_json' => 'Pilih minimal satu layanan.']);
+        }
+
         // Hitung total harga
-        $serviceIds = collect($request->services)->pluck('id')->toArray();
-        $quantities = collect($request->services)->pluck('quantity', 'id')->toArray();
-        $servicesData = Service::whereIn('id', $serviceIds)->get();
         $totalPrice = 0;
+        $serviceIds = [];
+        $quantities = [];
+        foreach ($services as $item) {
+            $serviceIds[] = $item['id'];
+            $quantities[$item['id']] = $item['quantity'];
+        }
+
+        $servicesData = Service::whereIn('id', $serviceIds)->get();
         foreach ($servicesData as $service) {
             $totalPrice += $service->price * $quantities[$service->id];
         }
@@ -69,34 +78,34 @@ class KasirTransactionController extends Controller
             'total_price'    => $totalPrice,
         ]);
 
-        // Simpan service dengan quantity
+        // Attach services dengan quantity
         foreach ($servicesData as $service) {
             $booking->services()->attach($service->id, ['quantity' => $quantities[$service->id]]);
         }
 
         // Buat transaksi
         $transaction = Transaction::create([
-            'booking_id' => $booking->id,
-            'amount'     => $totalPrice,
-            'payment_method' => $request->payment_method,
-            'status'     => 'paid',
-            'paid_at'    => Carbon::now(),
+            'booking_id'      => $booking->id,
+            'amount'          => $totalPrice,
+            'payment_method'  => $request->payment_method,
+            'status'          => 'paid',
+            'paid_at'         => Carbon::now(),
         ]);
 
-        // Update customer total visits
+        // Update customer
         $customer = $booking->customer;
-        $customer->total_visits = ($customer->total_visits ?? 0) + 1;
+        $customer->total_visits += 1;
         $customer->last_visit = Carbon::now();
         $customer->save();
 
         return redirect()->route('kasir.transactions.receipt', $transaction->id)
-            ->with('success', 'Transaksi berhasil!');
+                        ->with('success', 'Transaksi berhasil!');
     }
 
     private function generateBookingCode()
     {
         $last = Booking::orderBy('id', 'desc')->first();
-        $number = $last ? intval(substr($last->booking_code, 2)) + 1 : 1;
+        $number = $last ? (int)substr($last->booking_code, 2) + 1 : 1;
         return 'BK' . str_pad($number, 3, '0', STR_PAD_LEFT);
     }
 
@@ -113,7 +122,7 @@ class KasirTransactionController extends Controller
         $booking = Booking::with(['services', 'customer'])->findOrFail($bookingId);
         
         $request->validate([
-            'payment_method' => 'required|in:cash,card,transfer',
+            'payment_method' => 'required|in:cash,qris',
             'paid_amount' => 'required|numeric|min:' . $booking->total_price,
         ]);
 

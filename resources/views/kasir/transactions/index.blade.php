@@ -12,7 +12,7 @@
             <form method="POST" action="{{ route('kasir.transactions.store') }}" id="transactionForm">
                 @csrf
 
-                {{-- Customer --}}
+                <!-- Customer -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Customer</label>
                     <select name="customer_id" x-model="customerId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
@@ -24,7 +24,7 @@
                     </select>
                 </div>
 
-                {{-- Barber --}}
+                <!-- Barber -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Barber</label>
                     <select name="barber_id" x-model="barberId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
@@ -36,21 +36,21 @@
                     </select>
                 </div>
 
-                {{-- Catatan --}}
+                <!-- Catatan -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Catatan</label>
                     <textarea name="notes" rows="2" x-model="notes" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
-                              :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
-                              placeholder="Catatan Tambahan (opsional)"></textarea>
+                            :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
+                            placeholder="Catatan Tambahan (opsional)"></textarea>
                 </div>
 
-                {{-- Pilih Service (Grid Card seperti booking) --}}
+                <!-- Pilih Service -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Pilih Service</label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @foreach($services as $service)
                         <div class="border rounded-lg p-3 flex justify-between items-center"
-                             :class="darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'">
+                            :class="darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'">
                             <div>
                                 <p class="font-medium" :class="darkMode ? 'text-white' : 'text-gray-800'">{{ $service->name }}</p>
                                 <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">Rp {{ number_format($service->price,0,',','.') }}</p>
@@ -67,11 +67,33 @@
                     </div>
                 </div>
 
-                {{-- Hidden inputs untuk services --}}
-                <template x-for="(item, index) in serviceList" :key="item.id">
-                    <input type="hidden" name="services[__INDEX__][id]" :value="item.id" x-model="item.id">
-                    <input type="hidden" name="services[__INDEX__][quantity]" :value="item.quantity" x-model="item.quantity">
-                </template>
+                <!-- JSON data untuk services (pengganti hidden inputs) -->
+                <input type="hidden" name="services_json" x-model="servicesJson">
+
+                <!-- Metode Pembayaran -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Metode Pembayaran</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="payment_method" value="cash" x-model="paymentMethod" class="mr-1" checked> Cash
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="mr-1"> Qris
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Jumlah Bayar & Kembalian -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Jumlah Bayar</label>
+                    <input type="number" name="paid_amount" x-model="paidAmount" @input="calculateChange" 
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                        :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
+                        placeholder="Masukkan jumlah uang" required>
+                    <p class="mt-1 text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">
+                        Kembalian: <span x-text="'Rp ' + formatPrice(changeAmount)"></span>
+                    </p>
+                </div>
 
                 <div class="mt-6 flex justify-end space-x-2">
                     <button type="button" @click="resetForm()" class="px-4 py-2 border rounded-lg transition"
@@ -167,10 +189,16 @@
             customerId: '',
             barberId: '',
             notes: '',
+            paymentMethod: 'cash',
+            paidAmount: 0,
+            changeAmount: 0,
             init() {
                 window.addEventListener('themeChanged', (e) => {
                     this.darkMode = e.detail.darkMode;
                 });
+            },
+            get servicesJson() {
+            return JSON.stringify(this.serviceList);
             },
             get serviceList() {
                 let list = [];
@@ -189,9 +217,13 @@
             },
             increaseQuantity(id) {
                 this.quantities[id] = (this.quantities[id] || 0) + 1;
+                this.calculateChange();
             },
             decreaseQuantity(id) {
-                if (this.quantities[id] > 0) this.quantities[id]--;
+                if (this.quantities[id] > 0) {
+                    this.quantities[id]--;
+                    this.calculateChange();
+                }
             },
             getServiceName(id) {
                 let service = this.servicesData.find(s => s.id === id);
@@ -204,6 +236,11 @@
             formatPrice(price) {
                 return price.toLocaleString('id-ID');
             },
+            calculateChange() {
+                let paid = parseFloat(this.paidAmount) || 0;
+                let total = this.totalPrice;
+                this.changeAmount = paid >= total ? paid - total : 0;
+            },
             resetForm() {
                 for (let id in this.quantities) {
                     this.quantities[id] = 0;
@@ -211,6 +248,9 @@
                 this.customerId = '';
                 this.barberId = '';
                 this.notes = '';
+                this.paymentMethod = 'cash';
+                this.paidAmount = 0;
+                this.changeAmount = 0;
             }
         }
     }
@@ -224,8 +264,7 @@
                     <label>Metode Pembayaran:</label>
                     <select id="payment_method" class="swal2-input">
                         <option value="cash">Cash</option>
-                        <option value="card">Kartu</option>
-                        <option value="transfer">Transfer</option>
+                        <option value="qris">Qris</option>
                     </select>
                     <label>Jumlah Bayar:</label>
                     <input type="number" id="paid_amount" class="swal2-input" placeholder="Masukkan jumlah bayar">
