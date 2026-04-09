@@ -80,8 +80,8 @@
     
     <div class="row"><span>Total item:</span><span>{{ $transaction->booking->services->count() }}</span></div>
     <div class="row total"><span>TOTAL:</span><span>Rp {{ number_format($transaction->amount,0,',','.') }}</span></div>
-    <div class="row"><span>Tunai:</span><span>Rp {{ number_format(request()->input('paid', $transaction->amount),0,',','.') }}</span></div>
-    <div class="row"><span>Kembalian:</span><span>Rp {{ number_format(max(0, request()->input('paid', 0) - $transaction->amount),0,',','.') }}</span></div>
+    <div class="row"><span>Tunai:</span><span>Rp {{ number_format($transaction->paid_amount,0,',','.') }}</span></div>
+    <div class="row"><span>Kembalian:</span><span>Rp {{ number_format($transaction->change_amount,0,',','.') }}</span></div>
     
     <div class="divider"></div>
     <div class="footer">

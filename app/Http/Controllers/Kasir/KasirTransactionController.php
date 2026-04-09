@@ -83,10 +83,14 @@ class KasirTransactionController extends Controller
             $booking->services()->attach($service->id, ['quantity' => $quantities[$service->id]]);
         }
 
+        $change = $request->paid_amount - $totalPrice;
+
         // Buat transaksi
         $transaction = Transaction::create([
             'booking_id'      => $booking->id,
             'amount'          => $totalPrice,
+            'paid_amount'     => $request->paid_amount,
+            'change_amount'   => $change,
             'payment_method'  => $request->payment_method,
             'status'          => 'paid',
             'paid_at'         => Carbon::now(),
@@ -131,11 +135,13 @@ class KasirTransactionController extends Controller
         $change = $paid - $total;
 
         $transaction = Transaction::create([
-            'booking_id' => $booking->id,
-            'amount' => $total,
-            'payment_method' => $request->payment_method,
-            'status' => 'paid',
-            'paid_at' => Carbon::now(),
+            'booking_id'      => $booking->id,
+            'amount'          => $total,
+            'paid_amount'     => $paid,
+            'change_amount'   => $change,
+            'payment_method'  => $request->payment_method,
+            'status'          => 'paid',
+            'paid_at'         => Carbon::now(),
         ]);
 
         $booking->status = 'completed';
@@ -155,5 +161,26 @@ class KasirTransactionController extends Controller
     {
         $transaction = Transaction::with(['booking.customer', 'booking.services', 'booking.barber'])->findOrFail($id);
         return view('kasir.transactions.receipt', compact('transaction'));
+    }
+
+    public function storeCustomer(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        $customer = Customer::create([
+            'name'          => $request->name,
+            'phone'         => $request->phone,
+            'email'         => $request->email,
+            'total_visits'  => 0,
+        ]);
+
+        return response()->json([
+            'id'   => $customer->id,
+            'name' => $customer->name,
+        ]);
     }
 }

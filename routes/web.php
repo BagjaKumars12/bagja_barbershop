@@ -68,11 +68,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/booking/{id}/total', [KasirTransactionController::class, 'getBookingTotal'])->name('booking.total');
     Route::post('/transactions/{bookingId}/pay', [KasirTransactionController::class, 'processPayment'])->name('transactions.pay');
     Route::get('/transactions/receipt/{id}', [KasirTransactionController::class, 'receipt'])->name('transactions.receipt');
+    Route::post('/customers', [KasirCustomerController::class, 'store'])->name('customers.store');
     Route::get('/bookings', [KasirBookingController::class, 'index'])->name('bookings.index');
     Route::put('/bookings/{id}/status', [KasirBookingController::class, 'updateStatus'])->name('bookings.updateStatus');
     Route::post('/bookings', [KasirBookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/create', [KasirBookingController::class, 'create'])->name('bookings.create');
-    Route::get('/customers', [KasirCustomerController::class, 'index'])->name('customers');
+    Route::get('/customers', [KasirCustomerController::class, 'index'])->name('customers.index');
     Route::get('/barbers', [KasirBarberController::class, 'index'])->name('barbers');
     Route::get('/services', [KasirServiceController::class, 'index'])->name('services');
     Route::get('/history', [KasirHistoryController::class, 'index'])->name('history');
