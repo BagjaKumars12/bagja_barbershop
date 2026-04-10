@@ -46,8 +46,8 @@
                     <a href="{{ route('admin.bookings.index') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg transition" :class="{ 'bg-[#D4AF37] text-white': activeMenu === 'admin.bookings.index', 'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'admin.bookings.index', 'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'admin.bookings.index' }">
                         <i class="fas fa-calendar-alt w-5"></i><span>Booking</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 px-4 py-2 rounded-lg transition" :class="{ 'text-gray-300 hover:bg-gray-700': darkMode, 'text-gray-700 hover:bg-gray-100': !darkMode }">
-                        <i class="fas fa-chart-line w-5"></i><span>Laporan</span>
+                    <a href="{{ route('admin.reports.transactions') }}" class="flex items-center space-x-3 px-4 py-2 rounded-lg transition" :class="{ 'bg-[#D4AF37] text-white': activeMenu === 'admin.reports.transactions', 'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'admin.reports.transactions', 'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'admin.bookings.index' }">
+                        <i class="fas fa-chart-line w-5"></i><span>Laporan Transaksi</span>
                     </a>
                 </nav>
             </div>

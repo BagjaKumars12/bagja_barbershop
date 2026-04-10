@@ -15,7 +15,7 @@ class KasirServiceController extends Controller
                 $q->where('name', 'LIKE', "%{$search}%");
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate(8)
             ->withQueryString();
 
         return view('kasir.services.index', compact('services', 'search'));

@@ -16,7 +16,8 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Customer</label>
                     <div class="flex gap-2">
-                        <select name="customer_id" id="customer_select" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]" required>
+                        <select name="customer_id" id="customer_select" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
                             <option value="">-- Pilih Customer --</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}">{{ $customer->name }}</option>
@@ -31,7 +32,8 @@
                 <!-- Barber dengan Select2 -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Barber</label>
-                    <select name="barber_id" id="barber_select" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]" required>
+                    <select name="barber_id" id="barber_select" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                            :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
                         <option value="">-- Pilih Barber --</option>
                         @foreach($barbers as $barber)
                             <option value="{{ $barber->id }}">{{ $barber->name }}</option>
@@ -54,10 +56,9 @@
                         @foreach($services as $service)
                         <div @click="toggleService({{ $service->id }})"
                              class="service-card rounded-xl overflow-hidden shadow-md cursor-pointer transition-all duration-200 border-2"
-                             :class="{
-                                'border-[#D4AF37] bg-yellow-50 dark:bg-gray-700': isSelected({{ $service->id }}),
-                                'border-transparent bg-white dark:bg-gray-800 hover:shadow-lg': !isSelected({{ $service->id }})
-                             }">
+                             :class="isSelected({{ $service->id }})
+                                ? 'border-[#D4AF37] ' + (darkMode ? 'bg-gray-700' : 'bg-yellow-50')
+                                : 'border-transparent hover:shadow-lg ' + (darkMode ? 'bg-gray-700' : 'bg-white')">
                             {{-- Gambar Service (gunakan asset atau placeholder) --}}
                             <img src="{{ asset('storage/services/' . $service->image) }}"
                                 alt="{{ $service->name }}"
@@ -75,16 +76,13 @@
                 <input type="hidden" name="services_json" x-model="servicesJson">
 
                 <!-- Metode Pembayaran -->
-                <div class="mb-4">
+                <div class="mt-4">
                     <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Metode Pembayaran</label>
-                    <div class="flex space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="payment_method" value="cash" x-model="paymentMethod" class="mr-1" checked> Cash
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="mr-1"> Qris
-                        </label>
-                    </div>
+                    <select name="payment_method" x-model="paymentMethod" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                            :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
+                        <option value="cash">Cash</option>
+                        <option value="card">Qris</option>
+                    </select>
                 </div>
 
                 <!-- Jumlah Bayar & Kembalian -->
@@ -183,34 +181,50 @@
             </div>
         </div>
     </div>
-</div>
 
-{{-- Modal Tambah Customer --}}
-<div id="customerModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeCustomerModal()"></div>
-        <div class="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full" :class="darkMode ? 'bg-gray-800' : 'bg-white'">
-            <div class="px-6 py-4">
-                <h3 class="text-lg font-medium leading-6" :class="darkMode ? 'text-white' : 'text-gray-900'">Tambah Customer Baru</h3>
-                <form id="addCustomerForm" class="mt-4 space-y-4">
-                    @csrf
-                    <div>
-                        <label class="block text-sm font-medium" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Nama Lengkap</label>
-                        <input type="text" name="name" required class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37]" :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'">
+    {{-- Modal Tambah Customer (Alpine.js) --}}
+    <div x-show="isCustomerModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isCustomerModalOpen" @click="closeCustomerModal()" class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"></div>
+            <div x-show="isCustomerModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                 :class="darkMode ? 'bg-gray-800' : 'bg-white'">
+                <div class="px-6 pt-6 pb-4">
+                    <h3 class="text-lg font-medium leading-6" :class="darkMode ? 'text-white' : 'text-gray-900'">Tambah Customer Baru</h3>
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Nama Lengkap</label>
+                            <input type="text" x-model="customerForm.name" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                                   :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
+                                   placeholder="Masukkan nama lengkap">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">No. Telepon</label>
+                            <input type="text" x-model="customerForm.phone" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                                   :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
+                                   placeholder="Contoh: 08xxxxxxxxxx">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Email</label>
+                            <input type="email" x-model="customerForm.email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                                   :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"
+                                   placeholder="name@example.com">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">No. Telepon</label>
-                        <input type="text" name="phone" class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37]" :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Email</label>
-                        <input type="email" name="email" class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-[#D4AF37] focus:border-[#D4AF37]" :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'">
-                    </div>
-                </form>
-            </div>
-            <div class="px-6 py-3 bg-gray-50 flex justify-end space-x-2" :class="darkMode ? 'bg-gray-900' : 'bg-gray-50'">
-                <button type="button" @click="closeCustomerModal()" class="px-4 py-2 border rounded-lg" :class="darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'">Batal</button>
-                <button type="button" @click="saveCustomer()" class="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#b8942f]">Simpan</button>
+                </div>
+                <div class="px-6 py-4 flex justify-end space-x-3" :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'">
+                    <button type="button" @click="closeCustomerModal()"
+                            class="px-4 py-2 border rounded-lg transition"
+                            :class="darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'">Batal</button>
+                    <button type="button" @click="saveCustomer()"
+                            class="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#b8942f] transition">Simpan</button>
+                </div>
             </div>
         </div>
     </div>
@@ -224,7 +238,6 @@
 <script>
     function transactionForm() {
         return {
-            darkMode: localStorage.getItem('theme') === 'dark',
             servicesData: @json($services->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'price' => (float) $s->price])),
             selectedServices: [], // array of service ids
             customerId: '',
@@ -233,36 +246,20 @@
             paymentMethod: 'cash',
             paidAmount: 0,
             changeAmount: 0,
+            isCustomerModalOpen: false,
+            customerForm: { name: '', email: '', phone: '' },
 
             init() {
                 // Inisialisasi Select2
                 $('#customer_select').select2({
                     placeholder: '-- Pilih Customer --',
                     allowClear: true,
-                    theme: this.darkMode ? 'dark' : 'default'
                 }).on('change', (e) => { this.customerId = e.target.value; });
                 
                 $('#barber_select').select2({
                     placeholder: '-- Pilih Barber --',
                     allowClear: true,
-                    theme: this.darkMode ? 'dark' : 'default'
                 }).on('change', (e) => { this.barberId = e.target.value; });
-
-                // Update tema select2 saat darkMode berubah
-                window.addEventListener('themeChanged', (e) => {
-                    this.darkMode = e.detail.darkMode;
-                    // Re-initialize select2 dengan tema baru
-                    $('#customer_select').select2('destroy').select2({
-                        theme: this.darkMode ? 'dark' : 'default',
-                        placeholder: '-- Pilih Customer --',
-                        allowClear: true
-                    });
-                    $('#barber_select').select2('destroy').select2({
-                        theme: this.darkMode ? 'dark' : 'default',
-                        placeholder: '-- Pilih Barber --',
-                        allowClear: true
-                    });
-                });
             },
 
             // Service toggling
@@ -316,35 +313,106 @@
                 $('#barber_select').val(null).trigger('change');
             },
 
-            // Modal Customer
+            // Modal Customer (Alpine.js)
             openCustomerModal() {
-                $('#customerModal').removeClass('hidden');
+                this.customerForm = { name: '', email: '', phone: '' };
+                this.isCustomerModalOpen = true;
             },
             closeCustomerModal() {
-                $('#customerModal').addClass('hidden');
-                $('#addCustomerForm')[0].reset();
+                this.isCustomerModalOpen = false;
+                this.customerForm = { name: '', email: '', phone: '' };
             },
             saveCustomer() {
-                let form = document.getElementById('addCustomerForm');
-                let formData = new FormData(form);
-                fetch("{{ route('kasir.customers.store') }}", {
+                if (!this.customerForm.name.trim()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Nama wajib diisi!',
+                        confirmButtonColor: '#D4AF37',
+                        background: this.darkMode ? '#1f2937' : '#fff',
+                        color: this.darkMode ? '#e5e7eb' : '#1f2937'
+                    });
+                    return;
+                }
+                fetch("{{ route('kasir.customers.quick-store') }}", {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(this.customerForm)
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.id) {
-                        let newOption = new Option(data.name, data.id, false, true);
-                        $('#customer_select').append(newOption).trigger('change');
+                .then(res => {
+                    const contentType = res.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Response bukan JSON. Status: ' + res.status);
+                    }
+                    return res.json().then(data => ({ ok: res.ok, status: res.status, data }));
+                })
+                .then(({ ok, status, data }) => {
+                    if (ok && data.id) {
+                        // Tambah option baru ke select tanpa jQuery
+                        const select = document.getElementById('customer_select');
+                        const newOption = document.createElement('option');
+                        newOption.value = data.id;
+                        newOption.text = data.name;
+                        newOption.selected = true;
+                        select.appendChild(newOption);
+                        // Trigger Select2 update jika sudah ter-load
+                        if (typeof $ !== 'undefined' && $(select).data('select2')) {
+                            $(select).trigger('change');
+                        }
+                        this.customerId = data.id;
                         this.closeCustomerModal();
-                        Swal.fire('Berhasil', 'Customer baru ditambahkan', 'success');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Customer baru ditambahkan.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            background: this.darkMode ? '#1f2937' : '#fff',
+                            color: this.darkMode ? '#e5e7eb' : '#1f2937'
+                        });
+                    } else if (status === 422 && data.errors) {
+                        let pesan = Object.values(data.errors).flat().join('\n');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validasi Gagal!',
+                            text: pesan,
+                            confirmButtonColor: '#D4AF37',
+                            background: this.darkMode ? '#1f2937' : '#fff',
+                            color: this.darkMode ? '#e5e7eb' : '#1f2937'
+                        });
                     } else {
-                        Swal.fire('Gagal', data.message || 'Terjadi kesalahan', 'error');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: data.message || 'Terjadi kesalahan.',
+                            confirmButtonColor: '#D4AF37',
+                            background: this.darkMode ? '#1f2937' : '#fff',
+                            color: this.darkMode ? '#e5e7eb' : '#1f2937'
+                        });
                     }
                 })
                 .catch(err => {
-                    Swal.fire('Error', 'Gagal menyimpan customer', 'error');
+                    console.error('saveCustomer error:', err);
+                    // Cek apakah customer berhasil disimpan meski response error
+                    // dengan reload data customer via AJAX
+                    fetch("{{ route('kasir.customers.index') }}", {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    }).then(() => {}).catch(() => {});
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal!',
+                        text: err.message || 'Terjadi kesalahan.',
+                        confirmButtonColor: '#D4AF37',
+                        background: this.darkMode ? '#1f2937' : '#fff',
+                        color: this.darkMode ? '#e5e7eb' : '#1f2937'
+                    });
                 });
             },
 

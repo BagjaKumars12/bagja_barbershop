@@ -3,12 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\KasirController;
-use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\BarberController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Kasir\KasirDashboardController;
 use App\Http\Controllers\Kasir\KasirTransactionController;
 use App\Http\Controllers\Kasir\KasirBookingController;
@@ -57,7 +56,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/bookings/{id}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
-        // tambah route lainnya nanti
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions');
+        Route::get('/transactions/export/excel', [ReportController::class, 'exportExcel'])->name('transactions.export.excel');
+        Route::get('/transactions/export/pdf', [ReportController::class, 'exportPdf'])->name('transactions.export.pdf');
+        });
     });
 
     // Kasir Routes
@@ -68,6 +71,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/booking/{id}/total', [KasirTransactionController::class, 'getBookingTotal'])->name('booking.total');
     Route::post('/transactions/{bookingId}/pay', [KasirTransactionController::class, 'processPayment'])->name('transactions.pay');
     Route::get('/transactions/receipt/{id}', [KasirTransactionController::class, 'receipt'])->name('transactions.receipt');
+    Route::get('/transactions/history', [KasirTransactionController::class, 'history'])->name('transactions.history');
+    Route::get('/transactions/invoice/{id}', [KasirTransactionController::class, 'invoice'])->name('transactions.invoice');
+    Route::get('/transactions/invoice-pdf/{id}', [KasirTransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
+    Route::post('/transactions/send-email/{id}', [KasirTransactionController::class, 'sendInvoiceEmail'])->name('transactions.send.email');
+    Route::post('/transactions/send-wa/{id}', [KasirTransactionController::class, 'sendInvoiceWhatsapp'])->name('transactions.send.wa');
+    Route::post('/customers/quick-store', [KasirTransactionController::class, 'storeCustomer'])->name('customers.quick-store');
     Route::post('/customers', [KasirCustomerController::class, 'store'])->name('customers.store');
     Route::get('/bookings', [KasirBookingController::class, 'index'])->name('bookings.index');
     Route::put('/bookings/{id}/status', [KasirBookingController::class, 'updateStatus'])->name('bookings.updateStatus');
@@ -76,7 +85,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/customers', [KasirCustomerController::class, 'index'])->name('customers.index');
     Route::get('/barbers', [KasirBarberController::class, 'index'])->name('barbers');
     Route::get('/services', [KasirServiceController::class, 'index'])->name('services');
-    Route::get('/history', [KasirHistoryController::class, 'index'])->name('history');
     });
 
     // Owner Routes

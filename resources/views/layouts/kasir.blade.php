@@ -16,24 +16,6 @@
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #b8942f; }
         * { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
-
-        /* Dark mode untuk Select2 */
-        .dark .select2-container--default .select2-selection--single {
-            background-color: #374151;
-            border-color: #4b5563;
-            color: #e5e7eb;
-        }
-        .dark .select2-dropdown {
-            background-color: #374151;
-            border-color: #4b5563;
-        }
-        .dark .select2-results__option {
-            color: #e5e7eb;
-        }
-        .dark .select2-results__option--highlighted {
-            background-color: #D4AF37;
-            color: #1f2937;
-        }
     </style>
     @stack('styles')
 </head>
@@ -106,12 +88,12 @@
                         <i class="fas fa-cut w-5"></i>
                         <span>Service</span>
                     </a>
-                    <a href="{{ route('kasir.history') }}"
+                    <a href="{{ route('kasir.transactions.history') }}"
                        class="flex items-center space-x-3 px-4 py-2 rounded-lg transition"
                        :class="{
-                           'bg-[#D4AF37] text-white': activeMenu === 'kasir.history',
-                           'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'kasir.history',
-                           'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'kasir.history'
+                           'bg-[#D4AF37] text-white': activeMenu === 'kasir.transactions.history',
+                           'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'kasir.transactions.history',
+                           'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'kasir.transactions.history'
                        }">
                         <i class="fas fa-history w-5"></i>
                         <span>Riwayat Transaksi</span>

@@ -4,8 +4,7 @@
 @section('header', 'Booking')
 
 @section('content')
-<div class="space-y-6" x-data="bookingManager()">
-    {{-- Header dan tombol tambah --}}
+<div class="space-y-6" x-data="bookingManager()" x-init="init()">
     <div class="flex justify-between items-center">
         <div>
             <h2 class="text-xl font-semibold" :class="darkMode ? 'text-white' : 'text-gray-800'">Kelola Booking</h2>
@@ -33,7 +32,7 @@
     <div class="overflow-x-auto rounded-lg shadow" :class="darkMode ? 'bg-gray-800' : 'bg-white'">
         <table class="min-w-full divide-y" :class="darkMode ? 'divide-gray-700' : 'divide-gray-200'">
             <thead :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'">
-                 <tr>
+                <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Customer</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Barber</th>
@@ -42,7 +41,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Total</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Aksi</th>
-                 </tr>
+                </tr>
             </thead>
             <tbody class="divide-y" :class="darkMode ? 'divide-gray-700' : 'divide-gray-200'">
                 @forelse($bookings as $booking)
@@ -66,18 +65,24 @@
                                 {{ $booking->status_label['label'] }}
                             </span>
                         </td>
-                        <td class="py-2">
-
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {{-- Tombol Bayar untuk status pending atau confirmed --}}
+                            @if(in_array($booking->status, ['pending', 'confirmed']))
+                                <button @click="payBooking({{ $booking->id }})"
+                                        class="text-green-600 hover:text-green-800 transition"
+                                        :class="darkMode ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-800'">
+                                    <i class="fas fa-money-bill-wave"></i> Bayar
+                                </button>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                        <td colspan="8" class="px-6 py-4 text-center text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
                             <i class="fas fa-calendar-alt fa-2x mb-2 opacity-50"></i>
                             <p>Tidak ada booking ditemukan.</p>
-                            @if(request('search'))
-                                <p class="text-xs mt-1">Coba kata kunci lain.</p>
-                            @endif
                         </td>
                     </tr>
                 @endforelse
@@ -91,29 +96,71 @@
 
 @push('scripts')
 <script>
-
     function bookingManager() {
         return {
-            confirmDelete(id, code) {
-                const isDarkMode = document.documentElement.classList.contains('dark');
+            darkMode: localStorage.getItem('theme') === 'dark',
+            init() {
+                window.addEventListener('themeChanged', (e) => {
+                    this.darkMode = e.detail.darkMode;
+                });
+            },
+            payBooking(bookingId) {
+                let isDark = this.darkMode;
                 Swal.fire({
-                    title: 'Hapus Booking?',
-                    text: `Apakah Anda yakin ingin menghapus booking ${code}?`,
-                    icon: 'warning',
+                    title: 'Proses Pembayaran',
+                    html: `
+                        <div class="text-left">
+                            <p>Total: <span id="modalTotal"></span></p>
+                            <label>Metode Pembayaran:</label>
+                            <select id="payment_method" class="swal2-input">
+                                <option value="cash">Cash</option>
+                                <option value="qris">Qris</option>
+                            </select>
+                            <label>Jumlah Bayar:</label>
+                            <input type="number" id="paid_amount" class="swal2-input" placeholder="Masukkan jumlah bayar">
+                            <p>Kembalian: <span id="change">0</span></p>
+                        </div>
+                    `,
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: isDarkMode ? '#4b5563' : '#6c757d',
-                    confirmButtonText: 'Ya, hapus!',
+                    confirmButtonText: 'Bayar',
                     cancelButtonText: 'Batal',
-                    background: isDarkMode ? '#1f2937' : '#fff',
-                    color: isDarkMode ? '#e5e7eb' : '#1f2937'
+                    background: isDark ? '#1f2937' : '#fff',
+                    color: isDark ? '#e5e7eb' : '#000',
+                    confirmButtonColor: '#D4AF37',
+                    didOpen: () => {
+                        fetch(`/kasir/booking/${bookingId}/total`)
+                            .then(res => res.json())
+                            .then(data => {
+                                document.getElementById('modalTotal').innerText = 'Rp ' + data.total.toLocaleString('id-ID');
+                                window.currentTotal = data.total;
+                            });
+                        const paidInput = document.getElementById('paid_amount');
+                        const changeSpan = document.getElementById('change');
+                        paidInput.addEventListener('input', function() {
+                            let paid = parseFloat(paidInput.value) || 0;
+                            let change = paid - (window.currentTotal || 0);
+                            changeSpan.innerText = change >= 0 ? change.toLocaleString('id-ID') : 'Kurang';
+                        });
+                    },
+                    preConfirm: () => {
+                        const payment_method = document.getElementById('payment_method').value;
+                        const paid_amount = document.getElementById('paid_amount').value;
+                        if (!paid_amount || parseFloat(paid_amount) < window.currentTotal) {
+                            Swal.showValidationMessage('Jumlah bayar kurang dari total!');
+                            return false;
+                        }
+                        return { payment_method, paid_amount };
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        let url = deleteBaseUrl.replace('__ID__', id);
                         let form = document.createElement('form');
                         form.method = 'POST';
-                        form.action = url;
-                        form.innerHTML = '@csrf @method("DELETE")';
+                        form.action = `/kasir/transactions/${bookingId}/pay`;
+                        form.innerHTML = `
+                            @csrf
+                            <input name="payment_method" value="${result.value.payment_method}">
+                            <input name="paid_amount" value="${result.value.paid_amount}">
+                        `;
                         document.body.appendChild(form);
                         form.submit();
                     }

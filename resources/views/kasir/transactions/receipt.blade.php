@@ -57,6 +57,19 @@
 </head>
 <body>
 <div class="receipt">
+    <div class="flex gap-2">
+        <a href="{{ route('kasir.transactions.invoice', $transaction->id) }}" target="_blank" class="text-blue-600">📄 Invoice</a>
+        <form action="{{ route('kasir.transactions.send.email', $transaction->id) }}" method="POST" class="inline">
+            @csrf
+            <input type="email" name="email" placeholder="Email customer" value="{{ $transaction->booking->customer->email ?? '' }}" class="text-sm px-2 py-1 border rounded">
+            <button type="submit" class="text-green-600">✉️ Kirim Email</button>
+        </form>
+        <form action="{{ route('kasir.transactions.send.wa', $transaction->id) }}" method="POST" class="inline">
+            @csrf
+            <input type="text" name="phone" placeholder="No WhatsApp" value="{{ $transaction->booking->customer->phone ?? '' }}" class="text-sm px-2 py-1 border rounded">
+            <button type="submit" class="text-green-600">📱 Kirim WA</button>
+        </form>
+    </div>
     <div class="header">
         <h2>Bagja Barbershop</h2>
         <p>JL Arief Rohman Haikin No. 45<br>Subang, Jawa Barat</p>
