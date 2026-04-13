@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.owner')
 
 @section('title', 'Laporan Transaksi')
 @section('header', 'Laporan Transaksi')
@@ -8,10 +8,10 @@
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold" :class="darkMode ? 'text-white' : 'text-gray-800'">Laporan Transaksi</h2>
         <div class="flex gap-2">
-            <a href="{{ route('admin.reports.transactions.export.excel', request()->query()) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            <a href="{{ route('owner.reports.transactions.export.excel', request()->query()) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                 <i class="fas fa-file-excel"></i> Export Excel
             </a>
-            <a href="{{ route('admin.reports.transactions.export.pdf', request()->query()) }}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+            <a href="{{ route('owner.reports.transactions.export.pdf', request()->query()) }}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                 <i class="fas fa-file-pdf"></i> Export PDF
             </a>
         </div>
@@ -19,7 +19,7 @@
 
     {{-- Filter --}}
     <div class="p-4 rounded-lg shadow" :class="darkMode ? 'bg-gray-800' : 'bg-white'">
-        <form method="GET" action="{{ route('admin.reports.transactions') }}" class="flex flex-wrap gap-4 items-end">
+        <form method="GET" action="{{ route('owner.reports.transactions') }}" class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Cari</label>
                 <input type="text" name="search" placeholder="Customer / Kode Booking" value="{{ request('search') }}"
@@ -49,7 +49,7 @@
             </div>
             <div>
                 <button type="submit" class="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#b8942f] transition">Filter</button>
-                <a href="{{ route('admin.reports.transactions') }}" class="ml-2 px-4 py-2 border rounded-lg transition"
+                <a href="{{ route('owner.reports.transactions') }}" class="ml-2 px-4 py-2 border rounded-lg transition"
                    :class="darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'">Reset</a>
             </div>
         </form>
@@ -99,7 +99,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ ucfirst($transaction->payment_method) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->paid_at ? $transaction->paid_at->format('d/m/Y H:i') : '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ route('admin.transactions.receipt', $transaction->id) }}" class="text-blue-600 hover:text-blue-800">
+                        <a href="{{ route('owner.transactions.receipt', $transaction->id) }}" class="text-blue-600 hover:text-blue-800">
                             <i class="fas fa-print"></i> Struk
                         </a>
                     </td>

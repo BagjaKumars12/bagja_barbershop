@@ -27,14 +27,14 @@ class OwnerDashboardController extends Controller
         $activeUsers = User::where('last_login_at', '>=', Carbon::now()->subHours(24))->count();
         $todayBookings = Booking::whereDate('booking_time', $today)->count();
 
-        $query = Transaction::with(['booking.customer', 'booking.service'])
+        $query = Transaction::with(['booking.customer', 'booking.services'])
             ->whereDate('paid_at', $today)
             ->where('status', 'paid');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('booking.customer', fn($cq) => $cq->where('name', 'LIKE', "%{$search}%"))
-                  ->orWhereHas('booking.service', fn($sq) => $sq->where('name', 'LIKE', "%{$search}%"));
+                  ->orWhereHas('booking.services', fn($sq) => $sq->where('name', 'LIKE', "%{$search}%"));
             });
         }
 

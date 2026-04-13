@@ -115,10 +115,14 @@
                     <div class="flex items-center justify-between py-3 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-100'">
                         <div class="flex-1">
                             <p class="font-medium" :class="darkMode ? 'text-white' : 'text-gray-900'">
-                                {{ $transaction->customer?->name ?? 'Pelanggan tidak diketahui' }}
+                                {{ $transaction->booking->customer->name ?? 'Pelanggan tidak diketahui' }}
                             </p>
                             <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-                                {{ $transaction->service?->name ?? 'Layanan tidak diketahui' }} • Rp {{ number_format($transaction->amount, 0, ',', '.') }}
+                                @php
+                                    $serviceNames = $transaction->booking->services->pluck('name')->implode(', ');
+                                @endphp
+                                {{ $serviceNames ?: 'Layanan tidak diketahui' }} 
+                                • Rp {{ number_format($transaction->amount, 0, ',', '.') }}
                             </p>
                         </div>
                         <div class="text-right">

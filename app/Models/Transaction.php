@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
-    'booking_id',
-    'amount',
-    'paid_amount',
-    'change_amount',
-    'payment_method',
-    'status',
-    'paid_at',
+        'booking_id',
+        'transaction_code',
+        'amount',
+        'paid_amount',
+        'change_amount',
+        'payment_method',
+        'status',
+        'paid_at',
     ];
 
     protected $casts = [

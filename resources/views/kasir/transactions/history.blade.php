@@ -42,7 +42,7 @@
         <table class="min-w-full divide-y" :class="darkMode ? 'divide-gray-700' : 'divide-gray-200'">
             <thead :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">ID Transaksi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Kode Transaksi</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Kode Booking</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Customer</th>
                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Barber</th>
@@ -56,7 +56,7 @@
             <tbody class="divide-y" :class="darkMode ? 'divide-gray-700' : 'divide-gray-200'">
                 @forelse($transactions as $transaction)
                 <tr :class="darkMode ? 'bg-gray-800' : 'bg-white'">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">#{{ $transaction->id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->transaction_code  }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->booking->booking_code ?? '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->booking->customer->name ?? '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->booking->barber->name ?? '-' }}</td>
@@ -65,7 +65,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ ucfirst($transaction->payment_method) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">{{ $transaction->paid_at ? $transaction->paid_at->format('d/m/Y H:i') : '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ route('kasir.transactions.receipt', $transaction->id) }}" target="_blank" 
+                        <a href="{{ route('kasir.transactions.receipt', $transaction->id) }}"
                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                             <i class="fas fa-print"></i> Struk
                         </a>

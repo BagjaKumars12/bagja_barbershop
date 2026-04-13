@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
-class ReportController extends Controller
+class OwnerReportController extends Controller
 {
     // Menampilkan halaman laporan transaksi
     public function transactions(Request $request)
@@ -25,7 +25,7 @@ class ReportController extends Controller
         $totalAmount = $query->get()->sum('amount');
         $totalTransactions = $query->count();
 
-        return view('admin.reports.transactions', compact('transactions', 'totalAmount', 'totalTransactions'));
+        return view('owner.reports.transactions', compact('transactions', 'totalAmount', 'totalTransactions'));
     }
 
     // Export ke Excel
@@ -144,7 +144,7 @@ class ReportController extends Controller
         $totalAmount = $transactions->sum('amount');
         $totalTransactions = $transactions->count();
 
-        $pdf = Pdf::loadView('admin.reports.transactions_pdf', compact('transactions', 'totalAmount', 'totalTransactions', 'request'));
+        $pdf = Pdf::loadView('owner.reports.transactions_pdf', compact('transactions', 'totalAmount', 'totalTransactions', 'request'));
         return $pdf->download('laporan_transaksi_' . Carbon::now()->format('Ymd_His') . '.pdf');
     }
 

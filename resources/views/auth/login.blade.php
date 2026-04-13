@@ -12,12 +12,6 @@
             
             {{-- Header Form dengan Text Login --}}
             <div class="text-center">
-                <div class="mb-4">
-                    <span class="inline-block px-4 py-1 text-sm font-semibold tracking-wider uppercase rounded-full"
-                          :class="darkMode ? 'bg-[#D4AF37] text-gray-900' : 'bg-[#D4AF37] text-white'">
-                        Login
-                    </span>
-                </div>
                 <h2 class="text-2xl font-bold"
                     :class="darkMode ? 'text-white' : 'text-gray-900'">
                     Selamat Datang Kembali

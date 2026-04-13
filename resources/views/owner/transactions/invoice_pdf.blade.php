@@ -98,14 +98,14 @@
         <div class="info">
             <div class="left">
                 <strong>INVOICE</strong>
-                <span>No: {{ $transaction->transaction_code }}</span><br>
+                <span>No: #{{ $transaction->id }}</span><br>
                 <span>Tanggal: {{ $transaction->paid_at ? $transaction->paid_at->format('d/m/Y H:i') : '-' }}</span><br>
-                <span>Kasir: {{ auth()->user()->name ?? 'Admin' }}</span>
+                <span>Kasir: Ghaus</span>
             </div>
             <div class="right">
                 <strong>Pelanggan</strong>
-                <span>{{ $transaction->booking->customer->name ?? '-' }}</span><br>
-                <span>Email: {{ $transaction->booking->customer->email ?? '-' }}</span><br>
+                <span>Nama : {{ $transaction->booking->customer->name ?? '-' }}</span><br>
+                <span>Email : {{ $transaction->booking->customer->email ?? '-' }}</span><br>
                 <span>Telp: {{ $transaction->booking->customer->phone ?? '-' }}</span>
             </div>
         </div>
@@ -140,7 +140,7 @@
 
         <div class="thankyou">
             Terima kasih telah berkunjung!<br>
-            Senyum itu sedekah 😊
+            Senyum itu sedekah
         </div>
         <div class="footer">
             Invoice ini dibuat secara elektronik dan tidak memerlukan tanda tangan.

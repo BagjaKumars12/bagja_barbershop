@@ -17,9 +17,9 @@ class AdminController extends Controller
     {
         $today = Carbon::today();
         $search = $request->query('search');
-        $perPage = $request->query('per_page', 5); // default 5 per halaman
+        $perPage = $request->query('per_page', 5);
 
-        // Statistik tetap tanpa filter pencarian
+        // Statistik
         $todayTransactions = Transaction::whereDate('paid_at', $today)
             ->where('status', 'paid')
             ->count();
@@ -31,8 +31,8 @@ class AdminController extends Controller
         $activeUsers = User::where('last_login_at', '>=', Carbon::now()->subHours(24))->count();
         $todayBookings = Booking::whereDate('booking_time', $today)->count();
 
-        // Query transaksi hari ini
-        $query = Transaction::with(['booking.customer', 'booking.service'])
+        // Query transaksi hari ini dengan eager loading yang benar
+        $query = Transaction::with(['booking.customer', 'booking.services'])
             ->whereDate('paid_at', $today)
             ->where('status', 'paid');
 
@@ -40,13 +40,12 @@ class AdminController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereHas('booking.customer', function ($cq) use ($search) {
                     $cq->where('name', 'LIKE', "%{$search}%");
-                })->orWhereHas('booking.service', function ($sq) use ($search) {
+                })->orWhereHas('booking.services', function ($sq) use ($search) {
                     $sq->where('name', 'LIKE', "%{$search}%");
                 });
             });
         }
 
-        // Paginate, urutkan dari terbaru
         $transactions = $query->orderBy('paid_at', 'desc')->paginate($perPage);
 
         return view('admin.dashboard', compact(

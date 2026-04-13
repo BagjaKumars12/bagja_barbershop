@@ -98,7 +98,7 @@
         <div class="info">
             <div class="left">
                 <strong>INVOICE</strong>
-                <span>No: {{ $transaction->transaction_code }}</span><br>
+                <span>No: #{{ $transaction->id }}</span><br>
                 <span>Tanggal: {{ $transaction->paid_at ? $transaction->paid_at->format('d/m/Y H:i') : '-' }}</span><br>
                 <span>Kasir: {{ auth()->user()->name ?? 'Admin' }}</span>
             </div>
@@ -145,6 +145,10 @@
         <div class="footer">
             Invoice ini dibuat secara elektronik dan tidak memerlukan tanda tangan.
         </div>
+    </div>
+    <div class="no-print" style="text-align:center; margin-top:20px;">
+        <button onclick="window.print()" style="padding:8px 20px; background:#D4AF37; border:none; border-radius:6px; cursor:pointer;">🖨️ Cetak Invoice</button>
+        <button onclick="window.close()" style="padding:8px 20px; background:#6c757d; border:none; border-radius:6px; cursor:pointer; color:white;">Tutup</button>
     </div>
 </body>
 </html>

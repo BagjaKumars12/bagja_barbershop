@@ -11,6 +11,7 @@ use App\Models\Barber;
 use App\Models\InvoiceSentLog;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceMail;
+use App\Helpers\ActivityLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -33,7 +34,28 @@ class KasirTransactionController extends Controller
         return view('kasir.transactions.index', compact('queues', 'services', 'customers', 'barbers'));
     }
 
-    // Method untuk menyimpan transaksi cepat
+    // Generate kode booking (BK...)
+    private function generateBookingCode()
+    {
+        $last = Booking::orderBy('id', 'desc')->first();
+        $number = $last ? (int)substr($last->booking_code, 2) + 1 : 1;
+        return 'BK' . str_pad($number, 3, '0', STR_PAD_LEFT);
+    }
+
+    // Generate kode transaksi (TRX...)
+    private function generateTransactionCode()
+    {
+        $last = Transaction::orderBy('id', 'desc')->first();
+        if (!$last || !$last->transaction_code) {
+            $number = 1;
+        } else {
+            $lastCode = $last->transaction_code;
+            $number = (int) substr($lastCode, 3) + 1;
+        }
+        return 'TRX' . str_pad($number, 6, '0', STR_PAD_LEFT);
+    }
+
+    // Method untuk menyimpan transaksi cepat (form langsung)
     public function store(Request $request)
     {
         $request->validate([
@@ -89,9 +111,13 @@ class KasirTransactionController extends Controller
 
         $change = $request->paid_amount - $totalPrice;
 
-        // Buat transaksi
+        // Generate kode transaksi
+        $transactionCode = $this->generateTransactionCode();
+
+        // Buat transaksi (transaction_code diisi langsung)
         $transaction = Transaction::create([
             'booking_id'      => $booking->id,
+            'transaction_code'=> $transactionCode,
             'amount'          => $totalPrice,
             'paid_amount'     => $request->paid_amount,
             'change_amount'   => $change,
@@ -110,13 +136,6 @@ class KasirTransactionController extends Controller
                         ->with('success', 'Transaksi berhasil!');
     }
 
-    private function generateBookingCode()
-    {
-        $last = Booking::orderBy('id', 'desc')->first();
-        $number = $last ? (int)substr($last->booking_code, 2) + 1 : 1;
-        return 'BK' . str_pad($number, 3, '0', STR_PAD_LEFT);
-    }
-
     // Ambil total booking via AJAX
     public function getBookingTotal($id)
     {
@@ -124,22 +143,26 @@ class KasirTransactionController extends Controller
         return response()->json(['total' => $booking->total_price]);
     }
 
-    // Proses pembayaran dari booking
+    // Proses pembayaran dari antrian (booking yang sudah ada)
     public function processPayment(Request $request, $bookingId)
     {
         $booking = Booking::with(['services', 'customer'])->findOrFail($bookingId);
         
         $request->validate([
             'payment_method' => 'required|in:cash,qris',
-            'paid_amount' => 'required|numeric|min:' . $booking->total_price,
+            'paid_amount'    => 'required|numeric|min:' . $booking->total_price,
         ]);
 
-        $total = $booking->total_price;
-        $paid = $request->paid_amount;
+        $total  = $booking->total_price;
+        $paid   = $request->paid_amount;
         $change = $paid - $total;
+
+        // Generate kode transaksi
+        $transactionCode = $this->generateTransactionCode();
 
         $transaction = Transaction::create([
             'booking_id'      => $booking->id,
+            'transaction_code'=> $transactionCode,
             'amount'          => $total,
             'paid_amount'     => $paid,
             'change_amount'   => $change,
@@ -157,7 +180,7 @@ class KasirTransactionController extends Controller
         $customer->save();
 
         return redirect()->route('kasir.transactions.receipt', $transaction->id)
-            ->with('success', 'Pembayaran berhasil!');
+                         ->with('success', 'Pembayaran berhasil!');
     }
 
     // Tampilkan struk
@@ -167,6 +190,7 @@ class KasirTransactionController extends Controller
         return view('kasir.transactions.receipt', compact('transaction'));
     }
 
+    // Simpan customer cepat (AJAX)
     public function storeCustomer(Request $request)
     {
         $validated = $request->validate([
@@ -185,13 +209,13 @@ class KasirTransactionController extends Controller
           ->header('X-Debug-Bar', 'false');
     }
 
+    // Riwayat transaksi
     public function history(Request $request)
     {
         $query = Transaction::with(['booking.customer', 'booking.barber', 'booking.services'])
             ->where('status', 'paid')
             ->orderBy('paid_at', 'desc');
 
-        // Pencarian berdasarkan customer atau kode booking
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -203,7 +227,6 @@ class KasirTransactionController extends Controller
             });
         }
 
-        // Filter tanggal
         if ($request->filled('start_date')) {
             $query->whereDate('paid_at', '>=', $request->start_date);
         }
@@ -212,11 +235,10 @@ class KasirTransactionController extends Controller
         }
 
         $transactions = $query->paginate(15)->withQueryString();
-
         return view('kasir.transactions.history', compact('transactions'));
     }
 
-    // Menampilkan invoice di browser
+    // Tampilkan invoice di browser
     public function invoice($id)
     {
         $transaction = Transaction::with(['booking.customer', 'booking.services', 'booking.barber'])->findOrFail($id);
@@ -228,7 +250,7 @@ class KasirTransactionController extends Controller
     {
         $transaction = Transaction::with(['booking.customer', 'booking.services', 'booking.barber'])->findOrFail($id);
         $pdf = Pdf::loadView('kasir.transactions.invoice_pdf', compact('transaction'));
-        return $pdf->download('invoice_' . $transaction->id . '.pdf');
+        return $pdf->download('invoice_' . $transaction->transaction_code . '.pdf');
     }
 
     // Kirim invoice ke email
@@ -236,13 +258,13 @@ class KasirTransactionController extends Controller
     {
         $transaction = Transaction::with(['booking.customer'])->findOrFail($id);
         $email = $request->email ?? $transaction->booking->customer->email;
-        
+
         if (!$email) {
             return back()->with('error', 'Email customer tidak tersedia.');
         }
 
         $pdf = Pdf::loadView('kasir.transactions.invoice_pdf', compact('transaction'));
-        
+
         Mail::send([], [], function ($message) use ($email, $pdf, $transaction) {
             $message->to($email)
                     ->subject('Invoice Transaksi #' . $transaction->id)
@@ -252,69 +274,62 @@ class KasirTransactionController extends Controller
                     ]);
         });
 
-        // Log jika diperlukan
         InvoiceSentLog::create([
             'transaction_id' => $transaction->id,
-            'type' => 'email',
-            'destination' => $email,
-            'status' => true,
+            'type'           => 'email',
+            'destination'    => $email,
+            'status'         => true,
         ]);
 
         return back()->with('success', 'Invoice berhasil dikirim ke email ' . $email);
     }
 
-    // Kirim invoice ke WhatsApp (menggunakan Fonnte API sebagai contoh)
-    public function sendInvoiceWhatsapp(Request $request, $id)
+
+        /**
+     * Buka WhatsApp Web dengan pesan terisi otomatis.
+     * PDF di-download ke browser, lalu kasir attach manual di WA Web.
+     * Tidak butuh API key / Fonnte.
+     */
+    public function openWhatsappWeb($id)
     {
-        $transaction = Transaction::with(['booking.customer'])->findOrFail($id);
-        $phone = $request->phone ?? $transaction->booking->customer->phone;
-        
-        if (!$phone) {
-            return back()->with('error', 'Nomor WhatsApp customer tidak tersedia.');
+        $transaction = Transaction::with(['booking.customer', 'booking.services'])->findOrFail($id);
+        $customer    = $transaction->booking->customer;
+
+        // Normalisasi nomor
+        $phone = preg_replace('/[^0-9]/', '', $customer->phone ?? '');
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
         }
 
-        // Bersihkan nomor telepon (08123456789 -> 628123456789)
-        $phone = preg_replace('/^0/', '62', $phone);
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Generate PDF invoice
-        $pdf = Pdf::loadView('kasir.transactions.invoice_pdf', compact('transaction'));
-        $pdfContent = $pdf->output();
-        $pdfBase64 = base64_encode($pdfContent);
-        
-        // Kirim ke Fonnte API (contoh)
-        $apiKey = env('FONNTE_API_KEY'); // set di .env
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => [
-                'target' => $phone,
-                'message' => "Halo, terima kasih telah berkunjung ke Bagja Barbershop. Berikut invoice transaksi Anda.",
-                'filename' => 'invoice_' . $transaction->id . '.pdf',
-                'file' => $pdfBase64,
-            ],
-            CURLOPT_HTTPHEADER => [
-                'Authorization: ' . $apiKey
-            ],
+        // Susun pesan teks
+        $serviceList = $transaction->booking->services
+            ->map(fn($s) => '- ' . $s->name . ' (Rp ' . number_format($s->price, 0, ',', '.') . ')')
+            ->join("\n");
+
+        $tanggal     = $transaction->paid_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i');
+        $total       = 'Rp ' . number_format($transaction->amount, 0, ',', '.');
+        $tunai       = 'Rp ' . number_format($transaction->paid_amount, 0, ',', '.');
+        $kembalian   = 'Rp ' . number_format($transaction->change_amount, 0, ',', '.');
+
+        $message = "*Bagja Barbershop*\n"
+                . "━━━━━━━━━━━━━━━━━━━━\n"
+                . "Halo, *{$customer->name}*! Terima kasih telah berkunjung \n\n"
+                . "*Detail Transaksi #" . $transaction->id . "*\n"
+                . "Tanggal : {$tanggal}\n\n"
+                . "*Layanan:*\n{$serviceList}\n\n"
+                . "Total     : *{$total}*\n"
+                . "Tunai     : {$tunai}\n"
+                . "Kembalian : {$kembalian}\n\n"
+                . "━━━━━━━━━━━━━━━━━━━━\n"
+                . "_Invoice terlampir_";
+
+        // Encode untuk URL
+        $waUrl = 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
+
+        return response()->json([
+            'wa_url'      => $waUrl,
+            'has_phone'   => (bool) $phone,
+            'customer'    => $customer->name,
         ]);
-        $response = curl_exec($curl);
-        $error = curl_error($curl);
-        curl_close($curl);
-        
-        if ($error) {
-            return back()->with('error', 'Gagal mengirim via WhatsApp: ' . $error);
-        }
-        
-        InvoiceSentLog::create([
-            'transaction_id' => $transaction->id,
-            'type' => 'whatsapp',
-            'destination' => $phone,
-            'status' => true,
-            'response' => $response,
-        ]);
-        
-        return back()->with('success', 'Invoice berhasil dikirim ke WhatsApp ' . $phone);
     }
 }

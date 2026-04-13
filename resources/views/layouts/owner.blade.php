@@ -91,20 +91,22 @@
                         <i class="fas fa-calendar-alt w-5"></i>
                         <span>Booking</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('owner.reports.transactions') }}"
                        class="flex items-center space-x-3 px-4 py-2 rounded-lg transition"
                        :class="{
-                           'text-gray-300 hover:bg-gray-700': darkMode,
-                           'text-gray-700 hover:bg-gray-100': !darkMode
+                          'bg-[#D4AF37] text-white': activeMenu === 'owner.reports.transactions',
+                        'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'owner.reports.transactions',
+                        'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'owner.reports.transactions'
                         }">
                         <i class="fas fa-chart-line w-5"></i>
                         <span>Laporan</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('owner.log_activity.index') }}"
                     class="flex items-center space-x-3 px-4 py-2 rounded-lg transition"
                     :class="{
-                            'text-gray-300 hover:bg-gray-700': darkMode,
-                           'text-gray-700 hover:bg-gray-100': !darkMode
+                          'bg-[#D4AF37] text-white': activeMenu === 'owner.log_activity.index',
+                        'text-gray-300 hover:bg-gray-700': darkMode && activeMenu !== 'owner.log_activity.index',
+                        'text-gray-700 hover:bg-gray-100': !darkMode && activeMenu !== 'owner.log_activity.index'
                         }">
                         <i class="fas fa-history w-5"></i>
                         <span>Log Activity</span>

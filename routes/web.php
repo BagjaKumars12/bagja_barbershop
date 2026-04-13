@@ -7,6 +7,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\BarberController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Kasir\KasirDashboardController;
 use App\Http\Controllers\Kasir\KasirTransactionController;
@@ -20,8 +21,9 @@ use App\Http\Controllers\Owner\OwnerBookingController;
 use App\Http\Controllers\Owner\OwnerCustomerController;
 use App\Http\Controllers\Owner\OwnerBarberController;
 use App\Http\Controllers\Owner\OwnerServiceController;
-use App\Http\Controllers\Owner\OwnerLaporanController;
+use App\Http\Controllers\Owner\OwnerReportController;
 use App\Http\Controllers\Owner\OwnerLogActivityController;
+use App\Http\Controllers\Owner\OwnerTransactionController;
 
 // Login Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -56,6 +58,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/bookings/{id}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+    Route::get('/transactions/receipt/{id}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
+    Route::get('/transactions/invoice/{id}', [TransactionController::class, 'invoice'])->name('transactions.invoice');
+    Route::get('/transactions/invoice-pdf/{id}', [TransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
+    Route::post('/transactions/send-email/{id}', [TransactionController::class, 'sendInvoiceEmail'])->name('transactions.send.email');
+    Route::post('/transactions/send-wa/{id}', [TransactionController::class, 'sendInvoiceWhatsapp'])->name('transactions.send.wa');
+    Route::get('/transactions/{id}/whatsapp-web', [OwnerTransactionController::class, 'openWhatsappWeb'])->name('admin.transactions.whatsapp.web');
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions');
         Route::get('/transactions/export/excel', [ReportController::class, 'exportExcel'])->name('transactions.export.excel');
@@ -75,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/invoice/{id}', [KasirTransactionController::class, 'invoice'])->name('transactions.invoice');
     Route::get('/transactions/invoice-pdf/{id}', [KasirTransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
     Route::post('/transactions/send-email/{id}', [KasirTransactionController::class, 'sendInvoiceEmail'])->name('transactions.send.email');
-    Route::post('/transactions/send-wa/{id}', [KasirTransactionController::class, 'sendInvoiceWhatsapp'])->name('transactions.send.wa');
+    Route::get('/transactions/{id}/whatsapp-web', [KasirTransactionController::class, 'openWhatsappWeb'])->name('kasir.transactions.whatsapp.web');
     Route::post('/customers/quick-store', [KasirTransactionController::class, 'storeCustomer'])->name('customers.quick-store');
     Route::post('/customers', [KasirCustomerController::class, 'store'])->name('customers.store');
     Route::get('/bookings', [KasirBookingController::class, 'index'])->name('bookings.index');
@@ -97,7 +105,20 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/services', [OwnerServiceController::class, 'index'])->name('services.index');
         Route::get('/history', [OwnerHistoryController::class, 'index'])->name('history');
         Route::get('/users', [OwnerDashboardController::class, 'users'])->name('users');
+        Route::get('/transactions/receipt/{id}', [OwnerTransactionController::class, 'receipt'])->name('transactions.receipt');
+        Route::get('/transactions/invoice/{id}', [OwnerTransactionController::class, 'invoice'])->name('transactions.invoice');
+        Route::get('/transactions/invoice-pdf/{id}', [OwnerTransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
+        Route::post('/transactions/send-email/{id}', [OwnerTransactionController::class, 'sendInvoiceEmail'])->name('transactions.send.email');
+        Route::post('/transactions/send-wa/{id}', [OwnerTransactionController::class, 'sendInvoiceWhatsapp'])->name('transactions.send.wa');
+        Route::get('/transactions/{id}/whatsapp-web', [OwnerTransactionController::class, 'openWhatsappWeb'])->name('owner.transactions.whatsapp.web');
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/transactions', [OwnerReportController::class, 'transactions'])->name('transactions');
+            Route::get('/transactions/export/excel', [OwnerReportController::class, 'exportExcel'])->name('transactions.export.excel');
+            Route::get('/transactions/export/pdf', [OwnerReportController::class, 'exportPdf'])->name('transactions.export.pdf');
+            });
+        Route::resource('log_activity', App\Http\Controllers\Owner\OwnerLogActivityController::class)->only(['index', 'show']);
     });
+        
 }); 
 // Default redirect
 Route::get('/', function () {

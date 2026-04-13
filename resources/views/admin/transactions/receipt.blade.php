@@ -73,10 +73,11 @@
         }
     </style>
 </head>
+
 <body>
     {{-- Tombol Aksi (Print & Kirim) --}}
     <div class="action-buttons">
-        <form action="{{ route('kasir.transactions.send.email', $transaction->id) }}" method="POST" style="display: inline;">
+        <form action="{{ route('admin.transactions.send.email', $transaction->id) }}" method="POST" style="display: inline;">
             @csrf
             <button type="submit" class="btn-email">✉️ Kirim Email</button>
         </form>
@@ -89,9 +90,9 @@
     </div>
     <div class="divider"></div>
     
-    <div class="row"><span>No. Transaksi:</span><span>{{ $transaction->transaction_code }}</span></div>
+    <div class="row"><span>No. Transaksi:</span><span>{{ $transaction->id }}</span></div>
     <div class="row"><span>Tanggal:</span><span>{{ $transaction->paid_at->format('d/m/Y H:i') }}</span></div>
-    <div class="row"><span>Kasir:</span><span>{{ Auth::user()->username }}</span></div>
+    <div class="row"><span>Kasir:</span><span>{{ auth()->user()->username ?? 'Admin' }}</span></div>
     
     <div class="divider"></div>
     
@@ -123,22 +124,20 @@
 
 <script>
     function handleClose() {
-        // If this window was opened by a previous page, close it.
         if (window.opener) {
             window.close();
         } else {
-            // Otherwise redirect to transaction history
-            window.location.href = "{{ route('kasir.transactions.history') }}";
+            window.location.href = "{{ route('admin.reports.transactions') }}";
         }
     }
 
-        async function kirimViaWAWeb(transactionId) {
+    async function kirimViaWAWeb(transactionId) {
         const btn = event.target;
         btn.disabled = true;
         btn.textContent = '⏳ Menyiapkan...';
 
         try {
-            const res  = await fetch(`/kasir/transactions/${transactionId}/whatsapp-web`);
+            const res  = await fetch(`/admin/transactions/${transactionId}/whatsapp-web`);
             const data = await res.json();
 
             if (!data.has_phone) {

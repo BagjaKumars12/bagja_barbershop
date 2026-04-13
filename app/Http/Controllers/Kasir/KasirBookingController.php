@@ -24,6 +24,7 @@ class KasirBookingController extends Controller
     {
         $search = $request->query('search');
         $bookings = Booking::with(['customer', 'barber', 'services'])
+            ->where('status', '!=', 'completed')
             ->when($search, function ($query, $search) {
                 $query->where('booking_code', 'LIKE', "%{$search}%")
                     ->orWhereHas('customer', fn($q) => $q->where('name', 'LIKE', "%{$search}%"))
@@ -33,7 +34,9 @@ class KasirBookingController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $todayCount = Booking::whereDate('booking_time', Carbon::today())->count();
+        $todayCount = Booking::whereDate('booking_time', Carbon::today())
+        ->where('status', '!=', 'completed')
+        ->count();
 
         return view('kasir.bookings.index', compact('bookings', 'search', 'todayCount'));
     }
