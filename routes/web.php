@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/bookings/{id}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+    Route::post('/customers/quick-store', [TransactionController::class, 'storeCustomer'])->name('customers.quick-store');
     Route::get('/transactions/receipt/{id}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
     Route::get('/transactions/invoice/{id}', [TransactionController::class, 'invoice'])->name('transactions.invoice');
     Route::get('/transactions/invoice-pdf/{id}', [TransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
