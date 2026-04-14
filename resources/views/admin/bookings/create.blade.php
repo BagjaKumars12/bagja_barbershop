@@ -66,9 +66,11 @@
                 </div>
 
                 <div class="mt-4">
-                    <label class="block text-sm font-medium mb-1" :class="darkMode ? 'text-gray-300' : 'text-gray-700'">Tanggal & Waktu</label>
-                    <input type="datetime-local" name="booking_time" x-model="bookingTime" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
-                           :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
+                    <label class="block text-sm font-medium mb-1">Tanggal & Waktu</label>
+                    <input type="datetime-local" name="booking_time" x-model="bookingTime" 
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
+                        :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
+                    <p class="text-xs mt-1 text-gray-500">Jam operasional: 09:00 - 21:00 (WIB)</p>
                 </div>
 
                 <div class="mt-4">

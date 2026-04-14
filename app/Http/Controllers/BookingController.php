@@ -9,9 +9,12 @@ use App\Models\Barber;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Traits\BookingAvailability;
 
 class BookingController extends Controller
 {
+    use BookingAvailability;
+
     // Generate booking code otomatis
     private function generateBookingCode()
     {
@@ -58,10 +61,21 @@ class BookingController extends Controller
             'booking_time'   => 'required|date|after:now',
             'payment_method' => 'required|in:cash,card,transfer',
             'notes'          => 'nullable|string',
-            'service_ids'    => 'required|array|min:1',      // array ID layanan
+            'service_ids'    => 'required|array|min:1',
             'service_ids.*'  => 'exists:services,id'
         ]);
 
+        // Validasi jam operasional
+        if (!$this->isWithinOperatingHours($validated['booking_time'])) {
+            return back()->withErrors(['booking_time' => 'Jam operasional hanya 09:00 - 21:00.'])->withInput();
+        }
+
+        // Validasi ketersediaan barber
+        if (!$this->isBarberAvailable($validated['barber_id'], $validated['booking_time'])) {
+            return back()->withErrors(['barber_id' => 'Barber sudah memiliki booking pada waktu yang hampir bersamaan. Pilih waktu atau barber lain.'])->withInput();
+        }
+
+        // Hitung total
         $serviceIds = $validated['service_ids'];
         $services = Service::whereIn('id', $serviceIds)->get();
         $totalPrice = $services->sum('price');
@@ -77,7 +91,6 @@ class BookingController extends Controller
             'total_price'    => $totalPrice,
         ]);
 
-        // Simpan layanan ke pivot
         $booking->services()->attach($serviceIds);
 
         return redirect()->route('admin.bookings.index')
@@ -108,6 +121,18 @@ class BookingController extends Controller
             'service_ids.*'  => 'exists:services,id'
         ]);
 
+        // Validasi jam operasional (kecuali jika status sudah selesai/dibatalkan)
+        if (in_array($validated['status'], ['pending', 'confirmed'])) {
+            if (!$this->isWithinOperatingHours($validated['booking_time'])) {
+                return back()->withErrors(['booking_time' => 'Jam operasional hanya 09:00 - 21:00.'])->withInput();
+            }
+
+            // Cek ketersediaan barber, kecualikan booking ini sendiri
+            if (!$this->isBarberAvailable($validated['barber_id'], $validated['booking_time'], $id)) {
+                return back()->withErrors(['barber_id' => 'Barber sudah memiliki booking pada waktu yang hampir bersamaan. Pilih waktu atau barber lain.'])->withInput();
+            }
+        }
+
         $services = Service::whereIn('id', $validated['service_ids'])->get();
         $totalPrice = $services->sum('price');
 
@@ -121,7 +146,6 @@ class BookingController extends Controller
             'total_price'    => $totalPrice,
         ]);
 
-        // Sinkronisasi layanan (many-to-many)
         $booking->services()->sync($validated['service_ids']);
 
         return redirect()->route('admin.bookings.index')

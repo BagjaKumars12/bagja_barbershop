@@ -63,7 +63,7 @@ class KasirTransactionController extends Controller
             'barber_id'      => 'required|exists:barbers,id',
             'services_json'  => 'required|json',
             'notes'          => 'nullable|string',
-            'payment_method' => 'required|in:cash,qris',
+            'payment_method' => 'required|in:cash',
             'paid_amount'    => 'required|numeric|min:0',
         ]);
 
@@ -149,7 +149,7 @@ class KasirTransactionController extends Controller
         $booking = Booking::with(['services', 'customer'])->findOrFail($bookingId);
         
         $request->validate([
-            'payment_method' => 'required|in:cash,qris',
+            'payment_method' => 'required|in:cash',
             'paid_amount'    => 'required|numeric|min:' . $booking->total_price,
         ]);
 

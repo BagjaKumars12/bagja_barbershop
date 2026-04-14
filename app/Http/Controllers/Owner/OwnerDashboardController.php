@@ -25,7 +25,9 @@ class OwnerDashboardController extends Controller
         })->distinct('customer_id')->count('customer_id');
 
         $activeUsers = User::where('last_login_at', '>=', Carbon::now()->subHours(24))->count();
-        $todayBookings = Booking::whereDate('booking_time', $today)->count();
+        $todayBookings = Booking::whereDate('booking_time', Carbon::today())
+        ->where('status', '!=', 'completed')
+        ->count();
 
         $query = Transaction::with(['booking.customer', 'booking.services'])
             ->whereDate('paid_at', $today)

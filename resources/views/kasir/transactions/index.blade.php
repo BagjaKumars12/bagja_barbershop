@@ -81,7 +81,6 @@
                     <select name="payment_method" x-model="paymentMethod" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#D4AF37]"
                             :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'" required>
                         <option value="cash">Cash</option>
-                        <option value="card">Qris</option>
                     </select>
                 </div>
 
@@ -429,7 +428,6 @@
                             <label>Metode Pembayaran:</label>
                             <select id="payment_method" class="swal2-input">
                                 <option value="cash">Cash</option>
-                                <option value="qris">Qris</option>
                             </select>
                             <label>Jumlah Bayar:</label>
                             <input type="number" id="paid_amount" class="swal2-input" placeholder="Masukkan jumlah bayar">

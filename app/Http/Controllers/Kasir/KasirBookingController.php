@@ -9,10 +9,13 @@ use App\Models\Barber;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Traits\BookingAvailability;
 
 class KasirBookingController extends Controller
 {
-        // Generate booking code otomatis
+    use BookingAvailability;
+
+    // Generate booking code otomatis
     private function generateBookingCode()
     {
         $last = Booking::orderBy('id', 'desc')->first();
@@ -56,11 +59,21 @@ class KasirBookingController extends Controller
             'customer_id'    => 'required|exists:customers,id',
             'barber_id'      => 'required|exists:barbers,id',
             'booking_time'   => 'required|date|after:now',
-            'payment_method' => 'required|in:cash,card,transfer',
+            'payment_method' => 'required|in:cash',
             'notes'          => 'nullable|string',
-            'service_ids'    => 'required|array|min:1',      // array ID layanan
+            'service_ids'    => 'required|array|min:1',
             'service_ids.*'  => 'exists:services,id'
         ]);
+
+        // Jam operasional
+        if (!$this->isWithinOperatingHours($validated['booking_time'])) {
+            return back()->withErrors(['booking_time' => 'Jam operasional hanya 09:00 - 21:00.'])->withInput();
+        }
+
+        // Cek ketersediaan barber
+        if (!$this->isBarberAvailable($validated['barber_id'], $validated['booking_time'])) {
+            return back()->withErrors(['barber_id' => 'Barber sudah memiliki booking pada waktu yang hampir bersamaan. Pilih waktu atau barber lain.'])->withInput();
+        }
 
         $serviceIds = $validated['service_ids'];
         $services = Service::whereIn('id', $serviceIds)->get();
@@ -77,12 +90,12 @@ class KasirBookingController extends Controller
             'total_price'    => $totalPrice,
         ]);
 
-        // Simpan layanan ke pivot
         $booking->services()->attach($serviceIds);
 
         return redirect()->route('kasir.bookings.index')
             ->with('success', 'Booking berhasil ditambahkan.');
     }
+
     public function updateStatus(Request $request, $id)
     {
         $booking = Booking::findOrFail($id);

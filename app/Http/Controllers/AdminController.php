@@ -29,7 +29,9 @@ class AdminController extends Controller
         })->distinct('customer_id')->count('customer_id');
 
         $activeUsers = User::where('last_login_at', '>=', Carbon::now()->subHours(24))->count();
-        $todayBookings = Booking::whereDate('booking_time', $today)->count();
+        $todayBookings = Booking::whereDate('booking_time', Carbon::today())
+        ->where('status', '!=', 'completed')
+        ->count();
 
         // Query transaksi hari ini dengan eager loading yang benar
         $query = Transaction::with(['booking.customer', 'booking.services'])
