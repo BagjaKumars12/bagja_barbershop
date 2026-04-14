@@ -11,7 +11,7 @@
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>Waktu:</strong> {{ $log->created_at->format('d/m/Y H:i:s') }}</div>
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>User:</strong> {{ $log->user_name }}</div>
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>Role:</strong> {{ ucfirst($log->user_role) }}</div>
-            <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>Aksi:</strong> {{ $log->action }}</div>
+            <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>Aktifitas:</strong> {{ $log->activity }}</div>
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>Modul:</strong> {{ $log->module }}</div>
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>IP Address:</strong> {{ $log->ip_address }}</div>
             <div :class="darkMode ? 'text-gray-300' : 'text-gray-600'"><strong>User Agent:</strong> <span class="break-all">{{ $log->user_agent }}</span></div>
