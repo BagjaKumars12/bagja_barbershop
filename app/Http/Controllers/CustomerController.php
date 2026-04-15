@@ -58,6 +58,18 @@ class CustomerController extends Controller
     public function destroy($id)
     {
         $customer = Customer::findOrFail($id);
+
+        // Cek apakah customer memiliki transaksi (booking dengan status completed)
+        $hasTransaction = $customer->bookings()
+            ->where('status', 'completed')
+            ->exists();
+
+        if ($hasTransaction) {
+            return redirect()->route('admin.customers.index')
+                ->with('error', 'Customer tidak dapat dihapus karena sudah memiliki riwayat transaksi.');
+        }
+
+        // Jika tidak ada transaksi, boleh dihapus
         $customer->delete();
 
         return redirect()->route('admin.customers.index')

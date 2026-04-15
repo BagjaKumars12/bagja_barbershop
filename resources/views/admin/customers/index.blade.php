@@ -56,9 +56,15 @@
                             <button @click="openEditModal({{ $customer }})" class="text-gray-400 hover:text-gray-600 mr-2">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button @click="confirmDelete({{ $customer->id }}, '{{ addslashes($customer->name) }}')" class="text-gray-400 hover:text-red-600">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            @if($customer->bookings()->where('status', 'completed')->doesntExist())
+                                <button @click="confirmDelete({{ $customer->id }}, '{{ addslashes($customer->name) }}')" class="text-gray-400 hover:text-red-600">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            @else
+                                <span class="text-gray-400 cursor-not-allowed" title="Customer sudah memiliki transaksi, tidak bisa dihapus">
+                                    <i class="fas fa-trash-alt"></i>
+                                </span>
+                            @endif
                         </td>
                     </tr>
                 @empty

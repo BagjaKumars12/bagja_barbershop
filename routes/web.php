@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\BarberController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Admin\LogActivityController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Kasir\KasirDashboardController;
 use App\Http\Controllers\Kasir\KasirTransactionController;
@@ -64,7 +65,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/invoice-pdf/{id}', [TransactionController::class, 'generateInvoicePdf'])->name('transactions.invoice.pdf');
     Route::post('/transactions/send-email/{id}', [TransactionController::class, 'sendInvoiceEmail'])->name('transactions.send.email');
     Route::post('/transactions/send-wa/{id}', [TransactionController::class, 'sendInvoiceWhatsapp'])->name('transactions.send.wa');
-    Route::get('/transactions/{id}/whatsapp-web', [OwnerTransactionController::class, 'openWhatsappWeb'])->name('admin.transactions.whatsapp.web');
+    Route::get('/transactions/{id}/whatsapp-web', [TransactionController::class, 'openWhatsappWeb'])->name('admin.transactions.whatsapp.web');
+    Route::resource('log_activity', App\Http\Controllers\Admin\LogActivityController::class)->only(['index', 'show']);
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions');
         Route::get('/transactions/export/excel', [ReportController::class, 'exportExcel'])->name('transactions.export.excel');
